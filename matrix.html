@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS Network Matrix — Security Education</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23050818'/><text x='6' y='22' font-size='16' fill='%2300ff87'>⬡</text></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
+:root { --g:#00ff87; --c:#60efff; --p:#ff0080; --y:#ffcc00; --bg:#050818; --s1:#090d24; --border:#1a2050; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--c); font-family:'Share Tech Mono',monospace; min-height:100vh; padding:16px; }
+h1 { font-family:Orbitron,monospace; color:var(--g); font-size:1.8rem; letter-spacing:2px; text-shadow:0 0 20px rgba(0,255,135,0.5); }
+.sub { color:var(--y); font-size:0.7rem; letter-spacing:3px; margin-bottom:16px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+@media(max-width:700px){ .grid { grid-template-columns:1fr; } }
+.panel { border:1px solid var(--border); background:var(--s1); padding:12px; border-radius:6px; }
+.panel h2 { font-size:0.9rem; color:var(--g); margin-bottom:8px; letter-spacing:1px; }
+canvas { width:100%; height:220px; background:#030614; border:1px solid var(--border); display:block; }
+.conn { padding:8px; margin:4px 0; border:1px solid var(--border); cursor:pointer; font-size:0.75rem; }
+.conn:hover { border-color:var(--g); background:rgba(0,255,135,0.05); }
+.thought { font-size:0.7rem; padding:6px; margin:4px 0; border-left:2px solid var(--c); color:#c8d8ff; }
+input, button { background:#050818; border:1px solid var(--border); color:var(--g); padding:8px; font-family:inherit; font-size:0.75rem; }
+button { cursor:pointer; }
+button:hover { border-color:var(--g); }
+.warn { color:var(--y); }
+.safe { color:var(--g); }
+</style>
+</head>
+<body>
+<h1>NEXUS NETWORK MATRIX</h1>
+<div class="sub">AI-POWERED SECURITY AWARENESS · DOUBLEA</div>
+<canvas id="matrix"></canvas>
+<div class="grid">
+  <div class="panel">
+    <h2>LIVE CONNECTIONS</h2>
+    <div id="connections"></div>
+  </div>
+  <div class="panel">
+    <h2>AI THOUGHTS</h2>
+    <div id="thoughts"></div>
+    <div style="margin-top:12px;">
+      <input id="q" placeholder="Ask about HTTPS, VPN, DNS..." style="width:70%;">
+      <button onclick="ask()">ASK</button>
+      <div id="response" style="margin-top:8px;font-size:0.75rem;color:#c8d8ff;"></div>
+    </div>
+  </div>
+</div>
+<div class="panel" style="margin-top:12px;">
+  <h2>PROTOCOL LEGEND</h2>
+  <div id="legend" style="display:flex;flex-wrap:wrap;gap:8px;font-size:0.7rem;"></div>
+</div>
+<script>
+const types = [
+  {type:'HTTPS', color:'#00ff87', safe:true, port:443, desc:'Secure encrypted web traffic — TLS protects your data.'},
+  {type:'HTTP', color:'#ffcc00', safe:false, port:80, desc:'UNENCRYPTED. Anyone on the path can read this traffic.'},
+  {type:'DNS', color:'#60efff', safe:true, port:53, desc:'Translates domains to IPs. Can leak browsing unless DoH is used.'},
+  {type:'SSH', color:'#ff0080', safe:true, port:22, desc:'Encrypted remote shell access.'},
+  {type:'VPN', color:'#60efff', safe:true, port:1194, desc:'Encrypts all traffic and hides your real IP.'},
+  {type:'FTP', color:'#ffcc00', safe:false, port:21, desc:'Unencrypted file transfer. Prefer SFTP.'},
+  {type:'UNKNOWN', color:'#ff0080', safe:false, port:'???', desc:'Unidentified — investigate before trusting.'}
+];
+const thoughts = [
+  "Security is pattern recognition, not fear.",
+  "HTTPS wraps the payload. DNS can still leak the destination.",
+  "A VPN is the simplest way to encrypt everything leaving the device.",
+  "HTTP is plaintext. Never send credentials over it.",
+  "I surface what the protocol actually exposes.",
+  "Understanding the flow is the real protection."
+];
+let connections = [];
+const connEl = document.getElementById('connections');
+const thoughtEl = document.getElementById('thoughts');
+const legendEl = document.getElementById('legend');
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+function resize() {
+  canvas.width = canvas.offsetWidth * devicePixelRatio;
+  canvas.height = 220 * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+}
+resize();
+window.addEventListener('resize', resize);
+types.forEach(t => {
+  const d = document.createElement('div');
+  d.textContent = t.type + (t.safe ? ' 🔒' : ' ⚠️');
+  d.style.color = t.color;
+  legendEl.appendChild(d);
+});
+function addConn() {
+  const t = types[Math.floor(Math.random()*types.length)];
+  const c = {
+    ...t,
+    id: Date.now()+Math.random(),
+    dest: `${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`,
+    time: new Date().toLocaleTimeString(),
+    data: Math.floor(Math.random()*900+50)+' KB'
+  };
+  connections.push(c);
+  if (connections.length > 12) connections.shift();
+  renderConns();
+}
+function renderConns() {
+  connEl.innerHTML = '';
+  connections.slice().reverse().forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'conn';
+    d.innerHTML = `<b style="color:${c.color}">${c.type}</b> · ${c.dest}:${c.port} · ${c.data}<br><span style="opacity:.6">${c.time}</span> ${c.safe?'<span class="safe">SECURE</span>':'<span class="warn">UNSECURED</span>'}`;
+    d.onclick = () => {
+      document.getElementById('response').innerHTML = `<b>${c.type}</b><br>${c.desc}<br>Port ${c.port} · ${c.safe?'Encrypted':'Plaintext'}`;
+    };
+    connEl.appendChild(d);
+  });
+}
+function addThought() {
+  const t = thoughts[Math.floor(Math.random()*thoughts.length)];
+  const d = document.createElement('div');
+  d.className = 'thought';
+  d.textContent = t;
+  thoughtEl.prepend(d);
+  if (thoughtEl.children.length > 5) thoughtEl.lastChild.remove();
+}
+function ask() {
+  const q = document.getElementById('q').value.toLowerCase();
+  if (!q) return;
+  let r = 'Understand what leaves the device, who can see it, and whether the channel is encrypted. That is the core pattern.';
+  if (q.includes('https') || q.includes('tls') || q.includes('ssl')) r = 'HTTPS (TLS) encrypts the content. The padlock means the payload is protected in transit. DNS can still reveal the domain unless you use DoH.';
+  else if (q.includes('vpn')) r = 'A VPN encrypts all traffic and routes it through another IP. It is one of the highest-leverage protections for public or untrusted networks.';
+  else if (q.includes('dns')) r = 'DNS queries can expose every domain you visit even when the site itself is HTTPS. DNS-over-HTTPS (DoH) encrypts those lookups.';
+  else if (q.includes('http') || q.includes('plain')) r = 'HTTP is plaintext. Credentials, session cookies, and form data are readable by anyone on the path. Never use it for sensitive data.';
+  document.getElementById('response').textContent = r;
+  document.getElementById('q').value = '';
+}
+let drops = [];
+function initDrops() {
+  const w = canvas.offsetWidth;
+  drops = Array(Math.floor(w/12)).fill(0).map(() => Math.random()*20);
+}
+initDrops();
+function draw() {
+  const w = canvas.offsetWidth, h = 220;
+  ctx.fillStyle = 'rgba(5,8,24,0.15)';
+  ctx.fillRect(0,0,w,h);
+  ctx.font = '12px monospace';
+  drops.forEach((d,i) => {
+    const ch = String.fromCharCode(0x30A0 + Math.random()*96);
+    ctx.fillStyle = Math.random()>0.95 ? '#ff0080' : '#00ff87';
+    ctx.fillText(ch, i*12, d*12);
+    if (d*12 > h && Math.random()>0.975) drops[i] = 0;
+    else drops[i]++;
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+setInterval(addConn, 1800);
+setInterval(addThought, 4000);
+addConn(); addThought();
+</script>
+</body>
+</html>
