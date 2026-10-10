@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>NEXUS Wallpaper</title>
+<style>
+* { margin:0; padding:0; }
+html, body { width:100%; height:100%; overflow:hidden; background:#050818; }
+canvas { display:block; width:100%; height:100%; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+let W, H, cols, drops = [];
+function resize() {
+  W = c.width = window.innerWidth * devicePixelRatio;
+  H = c.height = window.innerHeight * devicePixelRatio;
+  c.style.width = window.innerWidth + 'px';
+  c.style.height = window.innerHeight + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  cols = Math.floor(window.innerWidth / 14);
+  drops = Array(cols).fill(1);
+}
+resize();
+window.addEventListener('resize', resize);
+const chars = '01アイウエオカキクケコNEXUS';
+function draw() {
+  ctx.fillStyle = 'rgba(5,8,24,0.12)';
+  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+  ctx.font = '14px monospace';
+  for (let i = 0; i < drops.length; i++) {
+    const text = chars[Math.floor(Math.random() * chars.length)];
+    const x = i * 14;
+    const y = drops[i] * 14;
+    ctx.fillStyle = Math.random() > 0.98 ? '#ff0080' : (Math.random() > 0.9 ? '#60efff' : '#00ff87');
+    ctx.fillText(text, x, y);
+    if (y > window.innerHeight && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+  const cx = window.innerWidth / 2, cy = window.innerHeight / 2 - 40;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.strokeStyle = '#ff0080';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#ff0080';
+  ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.moveTo(0, -70);
+  ctx.lineTo(50, -40);
+  ctx.lineTo(50, 20);
+  ctx.lineTo(0, 60);
+  ctx.lineTo(-50, 20);
+  ctx.lineTo(-50, -40);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.font = 'bold 48px Orbitron, monospace';
+  ctx.fillStyle = '#ff0080';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('N', 0, -5);
+  ctx.restore();
+  ctx.shadowBlur = 0;
+  ctx.font = 'bold 28px Orbitron, monospace';
+  ctx.fillStyle = '#60efff';
+  ctx.textAlign = 'center';
+  ctx.fillText('NEXUS', window.innerWidth/2, window.innerHeight/2 + 70);
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
